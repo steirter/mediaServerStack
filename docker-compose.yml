@@ -10,10 +10,12 @@ services:
     volumes:
       - /home/steirter/jellyfin/config:/config
       - /home/steirter/jellyfin/cache:/cache
-      - /mnt:/mnt
-      - /home/steirter/media:/internal
+      - /mnt/media:/mnt
+      ## - /home/steirter/media:/internal
     ports:
       - 8096:8096
+    networks:
+      - media
     ## restart: unless-stopped
 
   ## Simple homepage for every service
@@ -26,11 +28,13 @@ services:
     volumes:
       - /home/steirter/homer:/www/assets
     restart: unless-stopped
+    networks:
+      - media
+  
 
   ## Making sure that I can watch the movies I want with the right subtitles
-
   jellyseerr:            ## Requester to Radarr or Sonarr
-      image: fallenbagel/jellyseerr:latest
+      image: ghcr.io/seerr-team/seerr:latest
       container_name: jellyseerr
       environment:
         - LOG_LEVEL=debug
@@ -42,7 +46,8 @@ services:
       volumes:
         - /home/steirter/jellyseerr/config:/app/config
       restart: unless-stopped
-  
+      networks:
+      - media
   sonarr:                ## Download subtitles for shows
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
@@ -52,11 +57,14 @@ services:
       - TZ=Etc/UTC
     volumes:
     - /home/steirter/sonarr/config:/config
-    - /mnt/media/media/shows:/shows
+    - /mnt/media/shows:/shows
     - /home/steirter/Downloads/Torrents:/downloads
     ports:
       - 8989:8989
     restart: unless-stopped
+    networks:
+      - media
+
 
   radarr:                ## Download subtitles for movies
     image: lscr.io/linuxserver/radarr:latest
@@ -67,11 +75,14 @@ services:
       - TZ=Etc/UTC
     volumes:
     - /home/steirter/radarr/config:/config
-    - /mnt/media/media/movies:/movies
+    - /mnt/media/movies:/movies
     - /home/steirter/Downloads/Torrents:/downloads
     ports:
       - 7878:7878
     restart: unless-stopped
+    networks:
+      - media
+
 
   bazarr:                ## Connect subtitles to movies and shows
     image: lscr.io/linuxserver/bazarr:latest
@@ -82,12 +93,15 @@ services:
       - TZ=Etc/UTC
     volumes:
     - /home/steirter/bazarr/config:/config
-    - /mnt/media/media/movies:/movies
-    - /mnt/media/media/shows:/shows
+    - /mnt/media/movies:/movies
+    - /mnt/media/shows:/shows
 
     ports:
       - 6767:6767
     restart: unless-stopped
+    networks:
+      - media
+
   
   qbittorrent:           ## Torrent client
     image: lscr.io/linuxserver/qbittorrent:latest
@@ -106,6 +120,9 @@ services:
       - 6881:6881
       - 6881:6881/udp
     restart: unless-stopped
+    networks:
+      - media
+
 
   prowlarr:              ## Indexer for Torrent
     image: lscr.io/linuxserver/prowlarr:latest
@@ -119,6 +136,9 @@ services:
     ports:
       - 9696:9696
     restart: unless-stopped
+    networks:
+      - media
+
 
   ## Back End for keeping track and making sure everything runs 
   portainer:             ## check on the health of docker containers
@@ -130,6 +150,9 @@ services:
     ports:
       - 9000:9000
     restart: unless-stopped
+    networks:
+      - media
+
 
   dozzle:                ## check on log files of the container
     image: amir20/dozzle:latest
@@ -139,6 +162,9 @@ services:
     ports:
       - 9999:8080
     restart: unless-stopped
+    networks:
+      - media
+
 
   uptime-kuma:           ## check on uptime of  docker containers
     image: louislam/uptime-kuma:latest
@@ -148,3 +174,9 @@ services:
     ports:
       - 3001:3001
     restart: unless-stopped
+    networks:
+      - media
+
+networks:
+  media:
+    driver: bridge
