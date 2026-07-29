@@ -12,6 +12,8 @@ services:
       - /home/steirter/jellyfin/cache:/cache
       - /mnt/media:/mnt
       ## - /home/steirter/media:/internal
+    devices:
+      - /dev/dri:/dev/dri
     ports:
       - 8096:8096
     networks:
