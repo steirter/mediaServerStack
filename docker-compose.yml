@@ -11,6 +11,7 @@ services:
       - /home/steirter/jellyfin/config:/config
       - /home/steirter/jellyfin/cache:/cache
       - /mnt/media:/mnt
+      - /media/synology_media:/media
       ## - /home/steirter/media:/internal
     devices:
       - /dev/dri:/dev/dri
@@ -60,6 +61,7 @@ services:
     volumes:
     - /home/steirter/sonarr/config:/config
     - /mnt/media/shows:/shows
+    - /media/synology_media:/shows_synology
     - /home/steirter/Downloads/Torrents:/downloads
     ports:
       - 8989:8989
@@ -78,6 +80,7 @@ services:
     volumes:
     - /home/steirter/radarr/config:/config
     - /mnt/media/movies:/movies
+    - /media/synology_media:/movies_synology
     - /home/steirter/Downloads/Torrents:/downloads
     ports:
       - 7878:7878
@@ -97,6 +100,7 @@ services:
     - /home/steirter/bazarr/config:/config
     - /mnt/media/movies:/movies
     - /mnt/media/shows:/shows
+    - /media/synology_media:/media_synology
 
     ports:
       - 6767:6767
