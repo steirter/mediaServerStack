@@ -5,7 +5,7 @@ services:
     container_name: jellyfin
     environment:
       - PUID=1000
-      - PGID=1001
+      - PGID=1000
       - TZ=Etc/UTC
     volumes:
       - /home/steirter/jellyfin/config:/config
@@ -56,12 +56,12 @@ services:
     container_name: sonarr
     environment:
       - PUID=1000
-      - PGID=1001
+      - PGID=1000
       - TZ=Etc/UTC
     volumes:
     - /home/steirter/sonarr/config:/config
     - /mnt/media/shows:/shows
-    - /media/synology_media:/shows_synology
+    - /media/synology_media/shows:/shows_synology
     - /home/steirter/Downloads/Torrents:/downloads
     ports:
       - 8989:8989
@@ -75,12 +75,12 @@ services:
     container_name: radarr
     environment:
       - PUID=1000
-      - PGID=1001
+      - PGID=1000
       - TZ=Etc/UTC
     volumes:
     - /home/steirter/radarr/config:/config
     - /mnt/media/movies:/movies
-    - /media/synology_media:/movies_synology
+    - /media/synology_media/movies:/movies_synology
     - /home/steirter/Downloads/Torrents:/downloads
     ports:
       - 7878:7878
@@ -94,7 +94,7 @@ services:
     container_name: bazarr
     environment:
       - PUID=1000
-      - PGID=1001
+      - PGID=1000
       - TZ=Etc/UTC
     volumes:
     - /home/steirter/bazarr/config:/config
@@ -114,7 +114,7 @@ services:
     container_name: qbittorrent
     environment:
       - PUID=1000
-      - PGID=1001
+      - PGID=1000
       - TZ=Etc/UTC
       - WEBUI_PORT=8080
     volumes:
@@ -135,7 +135,7 @@ services:
     container_name: prowlarr
     environment:
       - PUID=1000
-      - PGID=1001
+      - PGID=1000
       - TZ=Etc/UTC
     volumes:
       - /home/steirter/prowlarr/config:/config
