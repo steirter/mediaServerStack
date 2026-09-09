@@ -1,188 +1,215 @@
-services:
+# Media stack: Jellyfin, sports feeds, download automation, and management tools.
 
-  jellyfin:              ## Main media server
+services:
+  # Main media server. Sportyfin writes playlists and guide data into /sportyfin.
+  jellyfin:
     image: jellyfin/jellyfin:latest
     container_name: jellyfin
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Etc/UTC
     volumes:
       - /home/steirter/jellyfin/config:/config
       - /home/steirter/jellyfin/cache:/cache
-      - /mnt/media:/mnt
+      - /home/steirter/sportyfin/output:/sportyfin
       - /media/synology_media:/media
-      ## - /home/steirter/media:/internal
     devices:
       - /dev/dri:/dev/dri
     ports:
-      - 8096:8096
+      - "8096:8096"
     networks:
       - media
-    ## restart: unless-stopped
 
-  ## Simple homepage for every service
+  # VPN gateway for Sportyfin. Use NordVPN service credentials in .env.
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      VPN_SERVICE_PROVIDER: nordvpn
+      VPN_TYPE: openvpn
+      OPENVPN_USER: ${NORDVPN_USER:?Set NORDVPN_USER in .env}
+      OPENVPN_PASSWORD: ${NORDVPN_PASSWORD:?Set NORDVPN_PASSWORD in .env}
+      SERVER_COUNTRIES: ${NORDVPN_COUNTRY:-United States}
+      TZ: Etc/UTC
+    restart: unless-stopped
+    networks:
+      - media
 
+  # Generates sports M3U playlists and XMLTV guide data through NordVPN.
+  sportyfin:
+    image: sportyfin/sportyfin:latest
+    container_name: sportyfin
+    network_mode: service:gluetun
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    volumes:
+      - /home/steirter/sportyfin/output:/sportyfin/output
+    restart: unless-stopped
+
+  # Simple homepage for the services in this stack.
   homer:
     image: b4bz/homer
     container_name: homer
-    ports:
-      - "80:8080"
     volumes:
       - /home/steirter/homer:/www/assets
+    ports:
+      - "80:8080"
     restart: unless-stopped
     networks:
       - media
-  
 
-  ## Making sure that I can watch the movies I want with the right subtitles
-  jellyseerr:            ## Requester to Radarr or Sonarr
-      image: ghcr.io/seerr-team/seerr:latest
-      container_name: jellyseerr
-      environment:
-        - LOG_LEVEL=debug
-        - TZ=Etc/UTC
-        - PUID=1000
-        - PGID=1001
-      ports:
-        - 5055:5055
-      volumes:
-        - /home/steirter/jellyseerr/config:/app/config
-      restart: unless-stopped
-      networks:
+  # Requests media and connects Jellyfin to the download automation services.
+  jellyseerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    container_name: jellyseerr
+    environment:
+      LOG_LEVEL: debug
+      TZ: Etc/UTC
+      PUID: "1000"
+      PGID: "1001"
+    volumes:
+      - /home/steirter/jellyseerr/config:/app/config
+    ports:
+      - "5055:5055"
+    restart: unless-stopped
+    networks:
       - media
-  sonarr:                ## Download subtitles for shows
+
+  # Finds and manages TV series downloads.
+  sonarr:
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Etc/UTC
     volumes:
-    - /home/steirter/sonarr/config:/config
-    - /mnt/media/shows:/shows
-    - /media/synology_media/shows:/shows_synology
-    - /home/steirter/Downloads/Torrents:/downloads
+      - /home/steirter/sonarr/config:/config
+      - /media/synology_media/shows:/shows
+      - /home/steirter/Downloads/Torrents:/downloads
     ports:
-      - 8989:8989
+      - "8989:8989"
     restart: unless-stopped
     networks:
       - media
 
-
-  radarr:                ## Download subtitles for movies
+  # Finds and manages movie downloads.
+  radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Etc/UTC
     volumes:
-    - /home/steirter/radarr/config:/config
-    - /mnt/media/movies:/movies
-    - /media/synology_media/movies:/movies_synology
-    - /home/steirter/Downloads/Torrents:/downloads
+      - /home/steirter/radarr/config:/config
+      - /media/synology_media/movies:/movies
+      - /home/steirter/Downloads/Torrents:/downloads
     ports:
-      - 7878:7878
+      - "7878:7878"
     restart: unless-stopped
     networks:
       - media
 
-
-  bazarr:                ## Connect subtitles to movies and shows
+  # Downloads subtitles for the movies and shows managed by Radarr and Sonarr.
+  bazarr:
     image: lscr.io/linuxserver/bazarr:latest
     container_name: bazarr
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Etc/UTC
     volumes:
-    - /home/steirter/bazarr/config:/config
-    - /mnt/media/movies:/movies
-    - /mnt/media/shows:/shows
-    - /media/synology_media:/media_synology
-
+      - /home/steirter/bazarr/config:/config
+      - /media/synology_media/movies:/movies
+      - /media/synology_media/shows:/shows
     ports:
-      - 6767:6767
+      - "6767:6767"
     restart: unless-stopped
     networks:
       - media
 
-  
-  qbittorrent:           ## Torrent client
+  # Torrent client used by Radarr and Sonarr.
+  qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
-      - WEBUI_PORT=8080
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Etc/UTC
+      WEBUI_PORT: "8080"
     volumes:
       - /home/steirter/qbittorrent/appdata:/config
       - /home/steirter/Downloads/Torrents:/downloads
       - /home/steirter/qbittorrent/ssl:/ssl
     ports:
-      - 8080:8080
-      - 6881:6881
-      - 6881:6881/udp
+      - "8080:8080"
+      - "6881:6881"
+      - "6881:6881/udp"
     restart: unless-stopped
     networks:
       - media
 
-
-  prowlarr:              ## Indexer for Torrent
+  # Indexer manager used by Radarr and Sonarr.
+  prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
     container_name: prowlarr
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Etc/UTC
     volumes:
       - /home/steirter/prowlarr/config:/config
     ports:
-      - 9696:9696
+      - "9696:9696"
     restart: unless-stopped
     networks:
       - media
 
-
-  ## Back End for keeping track and making sure everything runs 
-  portainer:             ## check on the health of docker containers
+  # Docker management interface.
+  portainer:
     image: portainer/portainer-ce:latest
     container_name: portainer
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /home/steirter/portainer/data:/data
     ports:
-      - 9000:9000
+      - "9000:9000"
     restart: unless-stopped
     networks:
       - media
 
-
-  dozzle:                ## check on log files of the container
+  # Live container log viewer.
+  dozzle:
     image: amir20/dozzle:latest
     container_name: dozzle
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      - 9999:8080
+      - "9999:8080"
     restart: unless-stopped
     networks:
       - media
 
-
-  uptime-kuma:           ## check on uptime of  docker containers
+  # Container uptime and availability monitoring.
+  uptime-kuma:
     image: louislam/uptime-kuma:latest
     container_name: uptime-kuma
     volumes:
       - /home/steirter/uptime-kuma:/app/data
     ports:
-      - 3001:3001
+      - "3001:3001"
     restart: unless-stopped
     networks:
       - media
 
+# A shared bridge lets the services reach each other by service name.
 networks:
   media:
     driver: bridge
