@@ -21,36 +21,35 @@ services:
     networks:
       - media
 
-  # VPN gateway for Sportyfin. Use NordVPN service credentials in .env.
-  gluetun:
-    image: qmcgaw/gluetun:latest
-    container_name: gluetun
-    cap_add:
-      - NET_ADMIN
-    devices:
-      - /dev/net/tun:/dev/net/tun
+  # Searches for missing TV theme songs and saves them as theme.mp3 for Jellyfin.
+  theme-downloader:
+    image: jauderho/yt-dlp:latest
+    container_name: theme-downloader
+    entrypoint: ["/bin/sh"]
+    command: ["/scripts/download-theme-songs.sh"]
     environment:
-      VPN_SERVICE_PROVIDER: nordvpn
-      VPN_TYPE: openvpn
-      OPENVPN_USER: ${NORDVPN_USER:?Set NORDVPN_USER in .env}
-      OPENVPN_PASSWORD: ${NORDVPN_PASSWORD:?Set NORDVPN_PASSWORD in .env}
-      SERVER_COUNTRIES: ${NORDVPN_COUNTRY:-United States}
+      SHOWS_DIR: /shows
+      MOVIES_DIR: /movies
+      DOWNLOAD_INTERVAL_SECONDS: "86400"
       TZ: Etc/UTC
+    volumes:
+      - /media/synology_media/shows:/shows
+      - /media/synology_media/movies:/movies
+      - /home/steirter/dockerCompose/theme-downloader:/scripts:ro
+      - /home/steirter/theme-downloader:/data
     restart: unless-stopped
     networks:
       - media
 
-  # Generates sports M3U playlists and XMLTV guide data through NordVPN.
+  # Generates sports M3U playlists and XMLTV guide data for Jellyfin Live TV.
   sportyfin:
     image: sportyfin/sportyfin:latest
     container_name: sportyfin
-    network_mode: service:gluetun
-    depends_on:
-      gluetun:
-        condition: service_healthy
     volumes:
       - /home/steirter/sportyfin/output:/sportyfin/output
     restart: unless-stopped
+    networks:
+      - media
 
   # Simple homepage for the services in this stack.
   homer:
