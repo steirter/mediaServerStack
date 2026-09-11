@@ -1,5 +1,11 @@
 # Media stack: Jellyfin, sports feeds, download automation, and management tools.
 
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   # Main media server. Sportyfin writes playlists and guide data into /sportyfin.
   jellyfin:
@@ -18,6 +24,8 @@ services:
       - /dev/dri:/dev/dri
     ports:
       - "8096:8096"
+    restart: unless-stopped
+    logging: *default-logging
     networks:
       - media
 
@@ -38,6 +46,7 @@ services:
       - /home/steirter/dockerCompose/theme-downloader:/scripts:ro
       - /home/steirter/theme-downloader:/data
     restart: unless-stopped
+    logging: *default-logging
     networks:
       - media
 
@@ -48,6 +57,7 @@ services:
     volumes:
       - /home/steirter/sportyfin/output:/sportyfin/output
     restart: unless-stopped
+    logging: *default-logging
     networks:
       - media
 
@@ -60,6 +70,7 @@ services:
     ports:
       - "80:8080"
     restart: unless-stopped
+    logging: *default-logging
     networks:
       - media
 
@@ -68,15 +79,22 @@ services:
     image: ghcr.io/seerr-team/seerr:latest
     container_name: jellyseerr
     environment:
-      LOG_LEVEL: debug
+      LOG_LEVEL: info
       TZ: Etc/UTC
       PUID: "1000"
       PGID: "1001"
     volumes:
       - /home/steirter/jellyseerr/config:/app/config
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:5055/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
     ports:
       - "5055:5055"
     restart: unless-stopped
+    logging: *default-logging
     networks:
       - media
 
@@ -91,10 +109,17 @@ services:
     volumes:
       - /home/steirter/sonarr/config:/config
       - /media/synology_media/shows:/shows
-      - /home/steirter/Downloads/Torrents:/downloads
+      - /media/synology_media/downloads:/downloads
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8989/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     ports:
       - "8989:8989"
     restart: unless-stopped
+    logging: *default-logging
     networks:
       - media
 
@@ -109,10 +134,17 @@ services:
     volumes:
       - /home/steirter/radarr/config:/config
       - /media/synology_media/movies:/movies
-      - /home/steirter/Downloads/Torrents:/downloads
+      - /media/synology_media/downloads:/downloads
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:7878/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     ports:
       - "7878:7878"
     restart: unless-stopped
+    logging: *default-logging
     networks:
       - media
 
@@ -128,9 +160,16 @@ services:
       - /home/steirter/bazarr/config:/config
       - /media/synology_media/movies:/movies
       - /media/synology_media/shows:/shows
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:6767/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
     ports:
       - "6767:6767"
     restart: unless-stopped
+    logging: *default-logging
     networks:
       - media
 
@@ -145,13 +184,20 @@ services:
       WEBUI_PORT: "8080"
     volumes:
       - /home/steirter/qbittorrent/appdata:/config
-      - /home/steirter/Downloads/Torrents:/downloads
+      - /media/synology_media/downloads:/downloads
       - /home/steirter/qbittorrent/ssl:/ssl
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     ports:
       - "8080:8080"
       - "6881:6881"
       - "6881:6881/udp"
     restart: unless-stopped
+    logging: *default-logging
     networks:
       - media
 
@@ -165,9 +211,16 @@ services:
       TZ: Etc/UTC
     volumes:
       - /home/steirter/prowlarr/config:/config
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9696/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     ports:
       - "9696:9696"
     restart: unless-stopped
+    logging: *default-logging
     networks:
       - media
 
@@ -181,6 +234,7 @@ services:
     ports:
       - "9000:9000"
     restart: unless-stopped
+    logging: *default-logging
     networks:
       - media
 
@@ -193,6 +247,7 @@ services:
     ports:
       - "9999:8080"
     restart: unless-stopped
+    logging: *default-logging
     networks:
       - media
 
@@ -205,6 +260,7 @@ services:
     ports:
       - "3001:3001"
     restart: unless-stopped
+    logging: *default-logging
     networks:
       - media
 
