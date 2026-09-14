@@ -51,15 +51,15 @@ services:
       - media
 
   # Generates sports M3U playlists and XMLTV guide data for Jellyfin Live TV.
-  sportyfin:
-    image: sportyfin/sportyfin:latest
-    container_name: sportyfin
-    volumes:
-      - /home/steirter/sportyfin/output:/sportyfin/output
-    restart: unless-stopped
-    logging: *default-logging
-    networks:
-      - media
+  # sportyfin:
+  #   image: sportyfin/sportyfin:latest
+  #   container_name: sportyfin
+  #   volumes:
+  #     - /home/steirter/sportyfin/output:/sportyfin/output
+  #   restart: unless-stopped
+  #   logging: *default-logging
+  #   networks:
+  #     - media
 
   # Simple homepage for the services in this stack.
   homer:
