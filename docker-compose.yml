@@ -16,9 +16,9 @@ services:
       PGID: "1000"
       TZ: Etc/UTC
     volumes:
-      - /home/steirter/jellyfin/config:/config
-      - /home/steirter/jellyfin/cache:/cache
-      - /home/steirter/sportyfin/output:/sportyfin
+      - ${HOME:?HOME must be set}/jellyfin/config:/config
+      - ${HOME:?HOME must be set}/jellyfin/cache:/cache
+      - ${HOME:?HOME must be set}/sportyfin/output:/sportyfin
       - /media/synology_media:/media
     devices:
       - /dev/dri:/dev/dri
@@ -43,8 +43,8 @@ services:
     volumes:
       - /media/synology_media/shows:/shows
       - /media/synology_media/movies:/movies
-      - /home/steirter/dockerCompose/theme-downloader:/scripts:ro
-      - /home/steirter/theme-downloader:/data
+      - ./theme-downloader:/scripts:ro
+      - ${HOME:?HOME must be set}/theme-downloader:/data
     restart: unless-stopped
     logging: *default-logging
     networks:
@@ -55,7 +55,7 @@ services:
   #   image: sportyfin/sportyfin:latest
   #   container_name: sportyfin
   #   volumes:
-  #     - /home/steirter/sportyfin/output:/sportyfin/output
+  #     - ${HOME:?HOME must be set}/sportyfin/output:/sportyfin/output
   #   restart: unless-stopped
   #   logging: *default-logging
   #   networks:
@@ -66,7 +66,7 @@ services:
     image: b4bz/homer
     container_name: homer
     volumes:
-      - /home/steirter/homer:/www/assets
+      - ${HOME:?HOME must be set}/homer:/www/assets
     ports:
       - "80:8080"
     restart: unless-stopped
@@ -84,7 +84,7 @@ services:
       PUID: "1000"
       PGID: "1001"
     volumes:
-      - /home/steirter/jellyseerr/config:/app/config
+      - ${HOME:?HOME must be set}/jellyseerr/config:/app/config
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:5055/ || exit 1"]
       interval: 30s
@@ -107,7 +107,7 @@ services:
       PGID: "1000"
       TZ: Etc/UTC
     volumes:
-      - /home/steirter/sonarr/config:/config
+      - ${HOME:?HOME must be set}/sonarr/config:/config
       - /media/synology_media/shows:/shows
       - /media/synology_media/downloads:/downloads
     healthcheck:
@@ -132,7 +132,7 @@ services:
       PGID: "1000"
       TZ: Etc/UTC
     volumes:
-      - /home/steirter/radarr/config:/config
+      - ${HOME:?HOME must be set}/radarr/config:/config
       - /media/synology_media/movies:/movies
       - /media/synology_media/downloads:/downloads
     healthcheck:
@@ -157,7 +157,7 @@ services:
       PGID: "1000"
       TZ: Etc/UTC
     volumes:
-      - /home/steirter/bazarr/config:/config
+      - ${HOME:?HOME must be set}/bazarr/config:/config
       - /media/synology_media/movies:/movies
       - /media/synology_media/shows:/shows
     healthcheck:
@@ -183,9 +183,9 @@ services:
       TZ: Etc/UTC
       WEBUI_PORT: "8080"
     volumes:
-      - /home/steirter/qbittorrent/appdata:/config
+      - ${HOME:?HOME must be set}/qbittorrent/appdata:/config
       - /media/synology_media/downloads:/downloads
-      - /home/steirter/qbittorrent/ssl:/ssl
+      - ${HOME:?HOME must be set}/qbittorrent/ssl:/ssl
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8080/ >/dev/null || exit 1"]
       interval: 30s
@@ -210,7 +210,7 @@ services:
       PGID: "1000"
       TZ: Etc/UTC
     volumes:
-      - /home/steirter/prowlarr/config:/config
+      - ${HOME:?HOME must be set}/prowlarr/config:/config
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:9696/ >/dev/null || exit 1"]
       interval: 30s
@@ -230,7 +230,7 @@ services:
     container_name: portainer
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /home/steirter/portainer/data:/data
+      - ${HOME:?HOME must be set}/portainer/data:/data
     ports:
       - "9000:9000"
     restart: unless-stopped
@@ -256,7 +256,7 @@ services:
     image: louislam/uptime-kuma:latest
     container_name: uptime-kuma
     volumes:
-      - /home/steirter/uptime-kuma:/app/data
+      - ${HOME:?HOME must be set}/uptime-kuma:/app/data
     ports:
       - "3001:3001"
     restart: unless-stopped
