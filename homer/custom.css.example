@@ -1,0 +1,114 @@
+:root {
+  --dashboard-border: rgba(148, 163, 148, 0.16);
+  --dashboard-border-strong: rgba(143, 113, 62, 0.52);
+  --dashboard-radius: 8px;
+  --dashboard-muted: rgba(157, 169, 159, 0.76);
+}
+
+body {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  background-image: linear-gradient(135deg, rgba(141, 168, 145, 0.045), transparent 38%),
+    linear-gradient(315deg, rgba(198, 161, 91, 0.035), transparent 42%);
+}
+
+#app .container {
+  max-width: 1500px;
+}
+
+#app .navbar {
+  background: transparent;
+  border-bottom: 1px solid var(--dashboard-border);
+  box-shadow: none;
+  margin-bottom: 1.75rem;
+  padding: 0.9rem 0;
+}
+
+#app .navbar-brand .navbar-item {
+  color: var(--text-header);
+  font-weight: 650;
+}
+
+#app .navbar .subtitle {
+  color: var(--dashboard-muted);
+  font-size: 0.82rem;
+}
+
+#app .service-title {
+  align-items: center;
+  display: flex;
+  gap: 0.65rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin: 2rem 0 0.9rem;
+  text-transform: uppercase;
+}
+
+#app .service-title::after {
+  background: var(--dashboard-border);
+  content: "";
+  flex: 1;
+  height: 1px;
+}
+
+#app .card {
+  background: var(--card-background);
+  border: 1px solid var(--dashboard-border);
+  border-radius: var(--dashboard-radius);
+  box-shadow: 0 5px 16px var(--card-shadow);
+  min-height: 100%;
+  overflow: hidden;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+#app .card:hover,
+#app .card:focus-within {
+  border-color: var(--dashboard-border-strong);
+  box-shadow: 0 9px 22px var(--card-shadow);
+  transform: translateY(-1px);
+}
+
+#app .card a {
+  min-height: 100%;
+}
+
+#app .card .card-content {
+  padding: 1rem 1.1rem;
+}
+
+#app .card .title {
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+#app .card .subtitle {
+  color: var(--text-subtitle);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+#app .card a:focus-visible {
+  outline: 2px solid var(--highlight-secondary);
+  outline-offset: -2px;
+}
+
+@media (max-width: 768px) {
+  #app .service-title {
+    margin-top: 1.5rem;
+  }
+
+  #app .card .card-content {
+    padding: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app .card {
+    transition: none;
+  }
+
+  #app .card:hover,
+  #app .card:focus-within {
+    transform: none;
+  }
+}

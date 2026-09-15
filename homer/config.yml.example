@@ -1,0 +1,83 @@
+title: "Home Lab"
+subtitle: "Media, automation, and infrastructure"
+
+theme: default
+columns: 3
+
+services:
+  - name: Watch
+    icon: "fas fa-play-circle"
+    items:
+      - name: Jellyfin
+        logo: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/jellyfin.png"
+        url: "http://SERVER_IP:8096"
+        subtitle: "Movies, series, and live TV"
+        target: _blank
+
+  - name: Requests
+    icon: "fas fa-inbox"
+    items:
+      - name: Jellyseerr
+        logo: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/jellyseerr.png"
+        url: "http://SERVER_IP:5055"
+        subtitle: "Request movies and series"
+        target: _blank
+
+  - name: Library
+    icon: "fas fa-layer-group"
+    items:
+      - name: Radarr
+        logo: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/radarr.png"
+        url: "http://SERVER_IP:7878"
+        subtitle: "Movie automation"
+        target: _blank
+      - name: Sonarr
+        logo: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/sonarr.png"
+        url: "http://SERVER_IP:8989"
+        subtitle: "Series automation"
+        target: _blank
+      - name: Bazarr
+        logo: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/bazarr.png"
+        url: "http://SERVER_IP:6767"
+        subtitle: "Subtitle automation"
+        target: _blank
+
+  - name: Downloads
+    icon: "fas fa-download"
+    items:
+      - name: qBittorrent
+        logo: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/qbittorrent.png"
+        url: "http://SERVER_IP:8080"
+        subtitle: "Active transfers"
+        target: _blank
+      - name: Prowlarr
+        logo: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/prowlarr.png"
+        url: "http://SERVER_IP:9696"
+        subtitle: "Indexer management"
+        target: _blank
+
+  - name: Infrastructure
+    icon: "fas fa-server"
+    items:
+      - name: Portainer
+        logo: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/portainer.png"
+        url: "http://SERVER_IP:9000"
+        subtitle: "Container management"
+        target: _blank
+
+  - name: Monitoring
+    icon: "fas fa-chart-line"
+    items:
+      - name: Dozzle
+        logo: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/dozzle.png"
+        url: "http://SERVER_IP:9999"
+        subtitle: "Live container logs"
+        target: _blank
+      - name: Uptime Kuma
+        logo: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/uptime-kuma.png"
+        url: "http://SERVER_IP:3001"
+        subtitle: "Availability monitoring"
+        target: _blank
+
+header: true
+footer: false

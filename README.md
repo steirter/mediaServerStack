@@ -293,6 +293,22 @@ Hardware transcoding must also be enabled in Jellyfin's Dashboard after the cont
 
 This Compose project does not require a `.env` file. There is an `.env.example` file in the repository, but it is only an example for optional NordVPN-related settings and is not currently used by any service in `docker-compose.yml`.
 
+## Homer dashboard template
+
+The repository includes an anonymized Homer dashboard template in `homer/config.yml.example` and `homer/custom.css.example`. It uses the placeholder `SERVER_IP`, generic branding, and public service icons from the dashboard-icons project, so it can be adapted without exposing a private network address or requiring local image files.
+
+To use the template, copy it into the Homer data directory before starting the stack:
+
+```sh
+mkdir -p "$HOME/homer"
+cp homer/config.yml.example "$HOME/homer/config.yml"
+cp homer/custom.css.example "$HOME/homer/custom.css"
+```
+
+Replace `SERVER_IP` in `$HOME/homer/config.yml` with the IP address or hostname of the Docker server. The Compose file mounts `$HOME/homer` into the Homer container, so changes to those files are picked up by Homer.
+
+The service logos are loaded from a public CDN. If the server cannot access the internet from a browser, replace the `logo` URLs with local image files or remove the `logo` fields to use Homer’s built-in icons.
+
 
 ## Troubleshooting
 
