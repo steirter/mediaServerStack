@@ -5,6 +5,7 @@
 /tools/reboot-every-4-days.service
 /tools/reboot-every-4-days.sh
 /tools/reboot-every-4-days.timer
+/tools/setup-wireguard.sh
 .gitignore
 
 # WireGuard private keys, server configuration, client profiles, and QR codes.
