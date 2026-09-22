@@ -1,3 +1,11 @@
 .env
 /backups
 *.swp
+/tools/install-reboot-timer.sh
+/tools/reboot-every-4-days.service
+/tools/reboot-every-4-days.sh
+/tools/reboot-every-4-days.timer
+.gitignore
+
+# WireGuard private keys, server configuration, client profiles, and QR codes.
+/wireguard/*
