@@ -258,22 +258,23 @@ The interval can be changed in `docker-compose.yml` with `DOWNLOAD_INTERVAL_SECO
 
 ### Trickplay progress
 
-Jellyfin can generate trickplay images for supported video files. To report which MKV files have a matching `.trickplay` directory, run this on the Docker host:
+Jellyfin can generate trickplay images for supported video files. To report video trickplay progress, run this on the Docker host. The script matches sidecars by filename; if a folder contains exactly one video, it also accepts a `.trickplay` directory in that folder with a different name.
 
 ```sh
 ./tools/check-trickplay-progress.sh /media/synology_media/shows
+./tools/check-trickplay-progress.sh /media/synology_media/movies
 ```
 
 To find orphaned `.trickplay` directories without deleting anything:
 
 ```sh
-./tools/cleanup-orphaned-trickplay.sh
+./tools/cleanup-orphaned-trickplay.sh /media/synology_media/shows
 ```
 
 Review the output first. To delete the reported orphaned entries:
 
 ```sh
-./tools/cleanup-orphaned-trickplay.sh --delete
+./tools/cleanup-orphaned-trickplay.sh --delete /media/synology_media/shows
 ```
 
 ## Optional hardware transcoding

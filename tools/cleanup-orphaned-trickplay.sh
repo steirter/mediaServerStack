@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-shows_dir=/media/synology_media/shows
+shows_dir=
+shows_dir_set=false
 delete_mode=false
 
 usage() {
-  printf 'Usage: %s [--delete] [shows-directory]\n' "${0##*/}" >&2
+  printf 'Usage: %s [--delete] shows-directory\n' "${0##*/}" >&2
   printf '\nWithout --delete, orphaned .trickplay entries are only reported.\n' >&2
 }
 
@@ -24,16 +25,22 @@ while (($# > 0)); do
       exit 2
       ;;
     *)
-      if [[ $shows_dir != /media/synology_media/shows ]]; then
+      if $shows_dir_set; then
         printf 'Only one shows directory may be provided.\n' >&2
         usage
         exit 2
       fi
       shows_dir=$1
+      shows_dir_set=true
       ;;
   esac
   shift
 done
+
+if ! $shows_dir_set; then
+  usage
+  exit 2
+fi
 
 if [[ ! -d $shows_dir ]]; then
   printf 'Shows directory does not exist or is not a directory: %s\n' "$shows_dir" >&2
