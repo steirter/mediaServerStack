@@ -83,27 +83,7 @@ while IFS= read -r -d '' media_path; do
   ((title_total += 1))
 
   trickplay_path=${media_path%.*}.trickplay
-  has_trickplay=false
   if [[ -d $trickplay_path ]]; then
-    has_trickplay=true
-  else
-    media_parent=${media_path%/*}
-    sibling_trickplay=$(find "$media_parent" -mindepth 1 -maxdepth 1 -type d -iname '*.trickplay' -print -quit)
-    if [[ -n $sibling_trickplay ]]; then
-      parent_video_count=0
-      while IFS= read -r -d '' parent_video; do
-        ((parent_video_count += 1))
-        if ((parent_video_count > 1)); then
-          break
-        fi
-      done < <(find_video_files "$media_parent" -maxdepth 1)
-      if ((parent_video_count == 1)); then
-        has_trickplay=true
-      fi
-    fi
-  fi
-
-  if $has_trickplay; then
     ((done_count += 1))
     ((title_done += 1))
   else
@@ -115,7 +95,7 @@ done < <(find_video_files "$media_dir" | sort -z)
 print_title_summary
 
 if ((total_count == 0)); then
-  printf 'No MKV files found.\n'
+  printf 'No video files found.\n'
   exit 0
 fi
 

@@ -6,7 +6,7 @@ shows_dir_set=false
 delete_mode=false
 
 usage() {
-  printf 'Usage: %s [--delete] shows-directory\n' "${0##*/}" >&2
+  printf 'Usage: %s [--delete] media-directory\n' "${0##*/}" >&2
   printf '\nWithout --delete, orphaned .trickplay entries are only reported.\n' >&2
 }
 
@@ -26,7 +26,7 @@ while (($# > 0)); do
       ;;
     *)
       if $shows_dir_set; then
-        printf 'Only one shows directory may be provided.\n' >&2
+        printf 'Only one media directory may be provided.\n' >&2
         usage
         exit 2
       fi
@@ -43,7 +43,7 @@ if ! $shows_dir_set; then
 fi
 
 if [[ ! -d $shows_dir ]]; then
-  printf 'Shows directory does not exist or is not a directory: %s\n' "$shows_dir" >&2
+  printf 'Media directory does not exist or is not a directory: %s\n' "$shows_dir" >&2
   exit 1
 fi
 
@@ -59,17 +59,23 @@ orphan_count=0
 while IFS= read -r -d '' trickplay_path; do
   trickplay_name=${trickplay_path##*/}
   media_name=${trickplay_name%.trickplay}
+  media_dir=${trickplay_path%/*}
+  media_found=false
 
-  case $media_name in
-    *.mkv)
-      media_path=${trickplay_path%.trickplay}
-      ;;
-    *)
-      media_path=${trickplay_path%.trickplay}.mkv
-      ;;
-  esac
+  while IFS= read -r -d '' media_path; do
+    media_filename=${media_path##*/}
+    media_extension=${media_filename##*.}
+    case ${media_extension,,} in
+      mkv|mp4|m4v|avi|mov|wmv|webm|mpg|mpeg|ts|m2ts|mts|vob|ogv|3gp|flv)
+        if [[ $media_filename == "$media_name" || ${media_filename%.*} == "$media_name" ]]; then
+          media_found=true
+          break
+        fi
+        ;;
+    esac
+  done < <(find "$media_dir" -maxdepth 1 -type f -print0)
 
-  if [[ -f $media_path ]]; then
+  if $media_found; then
     continue
   fi
 

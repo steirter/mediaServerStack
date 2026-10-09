@@ -258,7 +258,7 @@ The interval can be changed in `docker-compose.yml` with `DOWNLOAD_INTERVAL_SECO
 
 ### Trickplay progress
 
-Jellyfin can generate trickplay images for supported video files. To report video trickplay progress, run this on the Docker host. The script matches sidecars by filename; if a folder contains exactly one video, it also accepts a `.trickplay` directory in that folder with a different name.
+Jellyfin can generate trickplay images for supported video files. To report video trickplay progress, run this on the Docker host. A video is counted as done only when a `.trickplay` directory with the same basename exists beside it.
 
 ```sh
 ./tools/check-trickplay-progress.sh /media/synology_media/shows
