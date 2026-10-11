@@ -263,6 +263,7 @@ Jellyfin can generate trickplay images for supported video files. To report vide
 ```sh
 ./tools/check-trickplay-progress.sh /media/synology_media/shows
 ./tools/check-trickplay-progress.sh /media/synology_media/movies
+./tools/check-trickplay-progress.sh --remaining /media/synology_media/movies
 ```
 
 To find orphaned `.trickplay` directories without deleting anything:

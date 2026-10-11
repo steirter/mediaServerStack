@@ -2,29 +2,45 @@
 set -euo pipefail
 
 usage() {
-  printf 'Usage: %s <media-directory>\n' "${0##*/}" >&2
+  printf 'Usage: %s [--remaining] <media-directory>\n' "${0##*/}" >&2
   printf '\nReports video files with and without a matching .trickplay directory.\n' >&2
 }
 
-if (($# == 1)) && [[ $1 == --help || $1 == -h ]]; then
-  usage
-  exit 0
-fi
+remaining_only=false
+media_dir=
+media_dir_set=false
 
-if (($# != 1)); then
+while (($# > 0)); do
+  case $1 in
+    --remaining|-r)
+      remaining_only=true
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    --*)
+      printf 'Unknown option: %s\n' "$1" >&2
+      usage
+      exit 2
+      ;;
+    *)
+      if $media_dir_set; then
+        printf 'Only one media directory may be provided.\n' >&2
+        usage
+        exit 2
+      fi
+      media_dir=$1
+      media_dir_set=true
+      ;;
+  esac
+  shift
+done
+
+if ! $media_dir_set; then
   usage
   exit 2
 fi
-
-case $1 in
-  --*)
-    printf 'Unknown option: %s\n' "$1" >&2
-    usage
-    exit 2
-    ;;
-esac
-
-media_dir=$1
 
 if [[ ! -d $media_dir ]]; then
   printf 'Media directory does not exist or is not a directory: %s\n' "$media_dir" >&2
@@ -55,6 +71,9 @@ find_video_files() {
 
 print_title_summary() {
   if ((title_total == 0)); then
+    return
+  fi
+  if $remaining_only && ((title_left == 0)); then
     return
   fi
 
