@@ -10,3 +10,8 @@
 
 # WireGuard private keys, server configuration, client profiles, and QR codes.
 /wireguard/*
+
+# Local disk status dashboard (machine-specific helper service).
+/tools/diskcheck-web.py
+/tools/diskcheck-web@.service
+/tools/install-diskcheck-web-service.sh

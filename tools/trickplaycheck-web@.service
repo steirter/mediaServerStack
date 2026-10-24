@@ -1,0 +1,21 @@
+[Unit]
+Description=Trickplay check web service for %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=%i
+ExecStart=/usr/bin/python3 -B /usr/local/lib/trickplaycheck/trickplaycheck-web.py
+Environment=TRICKPLAYCHECK_CONFIG=/var/lib/trickplaycheck/config.json
+StateDirectory=trickplaycheck
+StateDirectoryMode=0700
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+
+[Install]
+WantedBy=multi-user.target

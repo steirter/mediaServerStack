@@ -26,6 +26,7 @@ The Compose file stores application configuration under `$HOME`. For example, if
 | Portainer | Manages Docker containers | `http://SERVER_IP:9000` |
 | Dozzle | Shows live container logs | `http://SERVER_IP:9999` |
 | Uptime Kuma | Monitors service availability | `http://SERVER_IP:3001` |
+| Trickplay Check | Shows Jellyfin trickplay progress for shows and movies | `http://SERVER_IP:8765` |
 | theme-downloader | Searches for missing theme songs | No web interface |
 
 Replace `SERVER_IP` with the IP address of the Docker server. All services are connected to the same Docker network and can communicate using their service names.
@@ -108,7 +109,7 @@ Do not delete an existing directory if it contains application configuration or 
 Make sure these host ports are available:
 
 ```text
-80, 3001, 5055, 6767, 7878, 8080, 8096, 8989, 9000, 9696, 9999, 6881/tcp, 6881/udp
+80, 3001, 5055, 6767, 7878, 8080, 8096, 8765, 8989, 9000, 9696, 9999, 6881/tcp, 6881/udp
 ```
 
 If another application already uses one of these ports, change the host-side port in `docker-compose.yml`. For example, changing `8096:8096` to `8097:8096` makes Jellyfin available on port `8097` while leaving its internal port unchanged.
@@ -202,6 +203,43 @@ docker compose up -d
 
 After that, Docker will restart the containers after reboot. Make sure the media storage is mounted before Docker starts; otherwise services may start while the libraries are unavailable.
 
+If the system-level `docker-compose.service` fails because `HOME` is unset, install the systemd override:
+
+```sh
+sudo ./tools/install-compose-service-home-override.sh
+```
+
+The installer adds `HOME` to the service, reloads systemd, and starts the failed unit.
+
+## Check trickplay progress from a web page
+
+The repository includes a host-side web page for running the existing, read-only trickplay progress checker with a button. On first visit, choose the folders the service should make available. Type an absolute path to get directory suggestions from the server, add more folders if needed, and choose whether each folder contains TV shows or movies/other videos.
+
+Install and start the service as the Linux user that can read the media directories:
+
+```sh
+sudo ./tools/install-trickplaycheck-web-service.sh
+```
+
+Open `http://SERVER_IP:8765` from a device on your local network. On first visit, configure the folders the service should scan. The service saves this list under `/var/lib/trickplaycheck/config.json` and keeps it across restarts. Use **Configure folders** later to update the available folders. The service account must be able to read the folders you select; scans do not modify their contents.
+
+Choose a library and select **Run check**. The page displays overall completion, per-title counts, and the script output. Large libraries can take several minutes to scan. For libraries marked **TV shows**, enable **List missing videos** to see missing filenames grouped by series.
+
+This page has no login and is intended for a trusted local network only. The service runs as the invoking Linux user and reads the media folders without write access. To check or control it:
+
+```sh
+sudo systemctl status "trickplaycheck-web@$(id -un).service"
+sudo systemctl restart "trickplaycheck-web@$(id -un).service"
+sudo systemctl disable --now "trickplaycheck-web@$(id -un).service"
+```
+
+After changing the checker or web page in the repository, rerun the installer to copy the updated files into the installed service, then restart it:
+
+```sh
+sudo ./tools/install-trickplaycheck-web-service.sh
+sudo systemctl restart "trickplaycheck-web@$(id -un).service"
+```
+
 ## Updating the stack
 
 Pull newer images and recreate containers when necessary:
@@ -260,11 +298,16 @@ The interval can be changed in `docker-compose.yml` with `DOWNLOAD_INTERVAL_SECO
 
 Jellyfin can generate trickplay images for supported video files. To report video trickplay progress, run this on the Docker host. A video is counted as done only when a `.trickplay` directory with the same basename exists beside it.
 
+You can also run this check from the [Trickplay Check web page](#check-trickplay-progress-from-a-web-page):
+
 ```sh
 ./tools/check-trickplay-progress.sh /media/synology_media/shows
 ./tools/check-trickplay-progress.sh /media/synology_media/movies
 ./tools/check-trickplay-progress.sh --remaining /media/synology_media/movies
+./tools/check-trickplay-progress.sh --list-missing /media/synology_media/shows
 ```
+
+`--list-missing` prints the relative filename of each show episode that does not have a matching `.trickplay` directory, grouped by series.
 
 To find orphaned `.trickplay` directories without deleting anything:
 

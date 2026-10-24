@@ -244,6 +244,7 @@ services:
     container_name: dozzle
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOME:?HOME must be set}/dozzle/data:/data
     ports:
       - "9999:8080"
     restart: unless-stopped

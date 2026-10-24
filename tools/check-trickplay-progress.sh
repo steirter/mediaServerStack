@@ -2,17 +2,23 @@
 set -euo pipefail
 
 usage() {
-  printf 'Usage: %s [--remaining] <media-directory>\n' "${0##*/}" >&2
+  printf 'Usage: %s [--remaining] [--list-missing] <media-directory>\n' "${0##*/}" >&2
   printf '\nReports video files with and without a matching .trickplay directory.\n' >&2
+  printf 'Use --list-missing to list each video file still missing trickplay images.\n' >&2
 }
 
 remaining_only=false
+list_missing=false
 media_dir=
 media_dir_set=false
 
 while (($# > 0)); do
   case $1 in
     --remaining|-r)
+      remaining_only=true
+      ;;
+    --list-missing)
+      list_missing=true
       remaining_only=true
       ;;
     --help|-h)
@@ -58,6 +64,7 @@ current_title=''
 title_total=0
 title_done=0
 title_left=0
+title_missing=()
 
 find_video_files() {
   find "$@" -type f \( \
@@ -81,6 +88,13 @@ print_title_summary() {
   printf '  Done:      %d\n' "$title_done"
   printf '  Total:     %d\n' "$title_total"
   printf '  Remaining: %d\n\n' "$title_left"
+  if $list_missing && ((${#title_missing[@]} > 0)); then
+    printf '  Missing episodes:\n'
+    for missing_path in "${title_missing[@]}"; do
+      printf '    - %s\n' "$missing_path"
+    done
+    printf '\n'
+  fi
 }
 
 while IFS= read -r -d '' media_path; do
@@ -96,6 +110,7 @@ while IFS= read -r -d '' media_path; do
     title_total=0
     title_done=0
     title_left=0
+    title_missing=()
   fi
 
   ((total_count += 1))
@@ -108,6 +123,9 @@ while IFS= read -r -d '' media_path; do
   else
     ((left_count += 1))
     ((title_left += 1))
+    if $list_missing; then
+      title_missing+=("${relative_path#"$title"/}")
+    fi
   fi
 done < <(find_video_files "$media_dir" | sort -z)
 

@@ -79,5 +79,19 @@ services:
         subtitle: "Availability monitoring"
         target: _blank
 
+  - name: Webservices
+    icon: "fas fa-globe"
+    items:
+      - name: Trickplay Check
+        icon: "fas fa-film"
+        url: "http://SERVER_IP:8765"
+        subtitle: "Check Jellyfin trickplay progress"
+        target: _blank
+      - name: Disk Check
+        icon: "fas fa-hdd"
+        url: "http://SERVER_IP:8766"
+        subtitle: "Server and media disk usage"
+        target: _blank
+
 header: true
 footer: false
