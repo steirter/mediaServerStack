@@ -225,6 +225,8 @@ Open `http://SERVER_IP:8765` from a device on your local network. On first visit
 
 Choose a library and select **Run check**. The page displays overall completion, per-title counts, and the script output. Large libraries can take several minutes to scan. For libraries marked **TV shows**, enable **List missing videos** to see missing filenames grouped by series.
 
+While a scan is running, select **Stop scan** to interrupt the checker and its child processes. The page reports that it stopped and shows any output produced so far.
+
 This page has no login and is intended for a trusted local network only. The service runs as the invoking Linux user and reads the media folders without write access. To check or control it:
 
 ```sh

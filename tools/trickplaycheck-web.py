@@ -29,8 +29,12 @@ MAX_LIBRARIES = 20
 SUGGESTION_LIMIT = 30
 
 run_lock = threading.Lock()
+active_process_lock = threading.Lock()
 config_lock = threading.RLock()
 libraries: list[dict[str, str]] = []
+active_process: subprocess.Popen[str] | None = None
+scan_active = False
+stop_requested = False
 
 PAGE = r"""<!doctype html>
 <html lang="en">
@@ -108,6 +112,10 @@ PAGE = r"""<!doctype html>
     .run-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; }
     .run-hint { color: #8191a8; font-size: .82rem; line-height: 1.5; }
     .run-button { min-width: 160px; }
+    .run-actions { display: flex; gap: 10px; }
+    .stop-button { border-color: #a64b52; color: #fff0ef; background: #803b43; }
+    .stop-button:hover:not(:disabled) { border-color: #d2666d; background: #98474f; }
+    button[hidden] { display: none; }
     .message { margin: 18px 0 0; color: #aab8cc; }
     .message.error { color: #ffaaa8; }
     .spinner {
@@ -159,7 +167,9 @@ PAGE = r"""<!doctype html>
       .folder-path { grid-column: 1 / -1; }
       .folder-row .remove-folder { width: auto; }
       .run-row { align-items: stretch; flex-direction: column-reverse; gap: 10px; }
-      .run-button { width: 100%; min-height: 50px; }
+      .run-actions { width: 100%; flex-direction: column; }
+      .run-actions button { width: 100%; }
+      .run-button { min-height: 50px; }
       .run-hint { font-size: .78rem; }
       .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
       .stat { padding: 13px; }
@@ -241,7 +251,10 @@ PAGE = r"""<!doctype html>
       </div>
       <div class="run-row">
         <span class="run-hint">Scans are read-only and can take several minutes for large libraries.</span>
-        <button id="run" class="run-button" type="button">Run check</button>
+        <div class="run-actions">
+          <button id="run" class="run-button" type="button">Run check</button>
+          <button id="stop" class="stop-button" type="button" hidden>Stop scan</button>
+        </div>
       </div>
       <p id="message" class="message" role="status" aria-live="polite">Choose a library and run a scan.</p>
 
@@ -271,6 +284,7 @@ PAGE = r"""<!doctype html>
   </main>
   <script>
     const runButton = document.querySelector("#run");
+    const stopButton = document.querySelector("#stop");
     const message = document.querySelector("#message");
     const result = document.querySelector("#result");
     const librarySelect = document.querySelector("#library");
@@ -422,11 +436,16 @@ PAGE = r"""<!doctype html>
         : "No titles have remaining videos.";
       document.querySelector("#output").textContent = data.output;
       document.querySelector("#details").open = false;
+      document.querySelector(".stats").hidden = false;
+      document.querySelector(".progress").hidden = false;
+      titles.hidden = false;
       result.hidden = false;
     }
 
     runButton.addEventListener("click", async () => {
       runButton.disabled = true;
+      stopButton.hidden = false;
+      stopButton.disabled = false;
       result.hidden = true;
       message.className = "message";
       message.innerHTML = '<span class="spinner" aria-hidden="true"></span>Scanning the library. Large libraries may take several minutes…';
@@ -446,6 +465,19 @@ PAGE = r"""<!doctype html>
           error.details = data.details;
           throw error;
         }
+        if (data.cancelled) {
+          document.querySelector("#result-title").textContent = "Scan stopped";
+          document.querySelector("#meta").textContent = `Stopped after ${data.duration_seconds}s`;
+          document.querySelector(".stats").hidden = true;
+          document.querySelector(".progress").hidden = true;
+          document.querySelector("#titles").hidden = true;
+          document.querySelector("#empty").hidden = true;
+          document.querySelector("#output").textContent = data.output || "The checker stopped before producing output.";
+          document.querySelector("#details").open = true;
+          result.hidden = false;
+          message.textContent = "Scan stopped. Partial output is available below.";
+          return;
+        }
         render(data);
         message.textContent = "Scan complete.";
       } catch (error) {
@@ -458,6 +490,24 @@ PAGE = r"""<!doctype html>
         }
       } finally {
         runButton.disabled = false;
+        stopButton.hidden = true;
+        stopButton.disabled = true;
+      }
+    });
+
+    stopButton.addEventListener("click", async () => {
+      stopButton.disabled = true;
+      message.className = "message";
+      message.textContent = "Sending interrupt to the scan…";
+      try {
+        const response = await fetch("/api/stop", { method: "POST" });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+        message.textContent = "Stop requested. Waiting for the checker to stop…";
+      } catch (error) {
+        message.className = "message error";
+        message.textContent = error.message || "Could not stop the scan.";
+        stopButton.disabled = false;
       }
     });
 
@@ -773,9 +823,37 @@ class TrickplayHandler(BaseHTTPRequestHandler):
         self.wfile.write(payload)
 
     def do_POST(self) -> None:
+        global active_process, scan_active, stop_requested
         request_path = urlsplit(self.path).path
-        if request_path not in ("/api/run", "/api/config"):
+        if request_path not in ("/api/run", "/api/config", "/api/stop"):
             self.send_json(404, {"error": "Not found"})
+            return
+
+        if request_path == "/api/stop":
+            with active_process_lock:
+                if not scan_active:
+                    self.send_json(409, {"error": "No trickplay scan is running"})
+                    return
+                stop_requested = True
+                process = active_process
+                if process is not None:
+                    if process.poll() is not None:
+                        stop_requested = False
+                        self.send_json(409, {"error": "The trickplay scan has already finished"})
+                        return
+                    try:
+                        os.killpg(process.pid, signal.SIGINT)
+                    except ProcessLookupError:
+                        if process.poll() is not None:
+                            stop_requested = False
+                            self.send_json(409, {"error": "The trickplay scan has already finished"})
+                            return
+                        self.send_json(500, {"error": "Could not interrupt the trickplay scan"})
+                        return
+                    except OSError as error:
+                        self.send_json(500, {"error": f"Could not interrupt the trickplay scan: {error}"})
+                        return
+            self.send_json(202, {"stopping": True})
             return
 
         content_type = self.headers.get("Content-Type", "").split(";", 1)[0].strip()
@@ -848,6 +926,12 @@ class TrickplayHandler(BaseHTTPRequestHandler):
             self.send_json(409, {"error": "A trickplay scan is already running"})
             return
 
+        with active_process_lock:
+            scan_active = True
+            stop_requested = False
+            active_process = None
+
+        process: subprocess.Popen[str] | None = None
         try:
             selected_library = next(
                 item for item in configured_libraries if item["id"] == library_key
@@ -888,6 +972,28 @@ class TrickplayHandler(BaseHTTPRequestHandler):
                 self.send_json(500, {"error": f"Could not start the checker: {error}"})
                 return
 
+            interrupt_error: OSError | None = None
+            with active_process_lock:
+                active_process = process
+                if stop_requested:
+                    try:
+                        os.killpg(process.pid, signal.SIGINT)
+                    except ProcessLookupError:
+                        pass
+                    except OSError as error:
+                        interrupt_error = error
+            if interrupt_error is not None:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.communicate()
+                self.send_json(
+                    500,
+                    {"error": f"Could not interrupt the trickplay scan: {interrupt_error}"},
+                )
+                return
+
             try:
                 stdout, stderr = process.communicate(timeout=RUN_TIMEOUT_SECONDS)
             except subprocess.TimeoutExpired:
@@ -907,6 +1013,18 @@ class TrickplayHandler(BaseHTTPRequestHandler):
                 return
 
             duration = round(time.monotonic() - start_time, 1)
+            with active_process_lock:
+                cancelled = active_process is process and stop_requested
+            if cancelled:
+                self.send_json(
+                    200,
+                    {
+                        "cancelled": True,
+                        "duration_seconds": duration,
+                        "output": stdout,
+                    },
+                )
+                return
             if process.returncode != 0:
                 details = "\n".join(part for part in (stdout, stderr) if part)
                 self.send_json(
@@ -936,6 +1054,11 @@ class TrickplayHandler(BaseHTTPRequestHandler):
                 },
             )
         finally:
+            with active_process_lock:
+                if active_process is process:
+                    active_process = None
+                scan_active = False
+                stop_requested = False
             run_lock.release()
 
 def main() -> None:
